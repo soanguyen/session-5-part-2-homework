@@ -4,8 +4,9 @@ import (
 	"context"
 	"ct-backend-course-baonguyen/internal/entity"
 	"fmt"
-	echo "github.com/labstack/echo/v4"
 	"net/http"
+
+	echo "github.com/labstack/echo/v4"
 )
 
 type UseCase interface {
@@ -13,6 +14,7 @@ type UseCase interface {
 	Register(ctx context.Context, req *entity.RegisterRequest) (*entity.RegisterResponse, error)
 	Self(ctx context.Context, req *entity.SelfRequest) (*entity.SelfResponse, error)
 	UploadImage(ctx context.Context, req *entity.UploadImageRequest) (*entity.UploadImageResponse, error)
+	ChangePassword(ctx context.Context, req *entity.ChangePasswordRequest) (*entity.ChangePasswordResponse, error)
 	// TODO: implement more
 }
 
@@ -65,6 +67,22 @@ func (h *Handler) Self(c echo.Context) error {
 	resp, err := h.uc.Self(context.TODO(), &selfReq)
 	if err != nil {
 		fmt.Print("error self controller")
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+
+	return c.JSON(http.StatusOK, resp)
+}
+
+func (h *Handler) ChangePassword(c echo.Context) error {
+	var req entity.ChangePasswordRequest
+	if err := c.Bind(&req); err != nil {
+		return fmt.Errorf("bind: %w", err)
+	}
+
+	ctx := context.WithValue(context.TODO(), "username", c.Get("username").(string))
+
+	resp, err := h.uc.ChangePassword(ctx, &req)
+	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 

@@ -14,7 +14,7 @@ import (
 type UserStore interface {
 	Create(info entity.UserInfo) error
 	Query(username string) (entity.UserInfo, error)
-	ChangePassword(password string) error
+	ChangePassword(username string, newPassword string) error
 }
 
 type ImageStore interface {
@@ -95,6 +95,18 @@ func (uc *ucImplement) UploadImage(ctx context.Context, req *entity.UploadImageR
 	// TODO: save image info to mongoDB image collection
 
 	return &entity.UploadImageResponse{ImageUrl: imageName}, nil
+}
+
+func (uc *ucImplement) ChangePassword(ctx context.Context, req *entity.ChangePasswordRequest) (*entity.ChangePasswordResponse, error) {
+	username := ctx.Value("username").(string)
+
+	// Change the password
+	err := uc.userStore.ChangePassword(username, req.NewPassword)
+	if err != nil {
+		return nil, fmt.Errorf("failed to change password: %w", err)
+	}
+
+	return &entity.ChangePasswordResponse{Message: "Password changed"}, nil
 }
 
 var ErrPasswordMisMatch = errors.New("Password mismatch")

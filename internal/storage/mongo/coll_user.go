@@ -4,8 +4,11 @@ import (
 	"context"
 	"ct-backend-course-baonguyen/internal/entity"
 	"ct-backend-course-baonguyen/pkg/hashpass"
-	"go.mongodb.org/mongo-driver/mongo"
+	"errors"
 	"time"
+
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 func NewUserCollection(db *mongo.Database, collName string) *userCollection {
@@ -36,6 +39,30 @@ func (c *userCollection) Create(info entity.UserInfo) error {
 func (c *userCollection) ChangePassword(username string, newPassword string) error {
 	// #TODO 3: implement ChangePassword
 	// oldPass and newPassword should not be duplicate
+	ctx, cancelFn := context.WithTimeout(context.Background(), c.timeout)
+	defer cancelFn()
+
+	var currentUser UserDoc
+	err := c.client.FindOne(ctx,
+		bson.M{"username": username}).Decode(&currentUser)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return errors.New("user not found")
+		}
+		return err
+	}
+
+	if IsPasswordDuplicate(newPassword, currentUser.HashPass) {
+		return errors.New("oldPass and newPassword should not be duplicate")
+	}
+
+	newHashedPassword := hashpass.HashPasswordLogin(newPassword, "123456")
+	_, err = c.client.UpdateOne(ctx,
+		bson.M{"username": username},
+		bson.M{"$set": bson.M{"hashPass": newHashedPassword}})
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

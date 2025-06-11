@@ -10,6 +10,7 @@ import (
 	auth "ct-backend-course-baonguyen/pkg/auth"
 	"ct-backend-course-baonguyen/pkg/bucket"
 	"ct-backend-course-baonguyen/pkg/validator"
+
 	_ "github.com/labstack/echo-jwt/v4"
 	echo "github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -60,6 +61,7 @@ func newServer(hdl *controller.Handler) *echo.Echo {
 
 	private.GET("/self", hdl.Self)
 	private.POST("/upload", hdl.UploadImage)
+	private.PUT("/change-password", hdl.ChangePassword)
 
 	return e
 }
